@@ -1,17 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Blocks, Puzzle, MonitorPlay, Sprout, X, CheckCircle2, Waves } from "lucide-react"
+import { Blocks, Puzzle, MonitorPlay, Sprout, X, CheckCircle2, Waves, Shuffle, Check } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { PageHeading } from "@/components/page-heading"
 
 type ActivityKey = "puzzle" | "simulasi"
-
-const PUZZLE_QUESTION =
-  "Berdasarkan data grafik di atas, jelaskan analisis Anda mengenai dampak kerusakan mangrove terhadap perubahan iklim."
-
-const PUZZLE_DISCUSSION =
-  "Analisis yang benar: Berdasarkan grafik, terlihat penurunan luas mangrove secara signifikan. Hal ini berkontribusi pada peningkatan emisi karbon dan hilangnya habitat. Seharusnya siswa bisa menyebutkan data dari sumbu X dan Y grafik, lalu menghubungkan dengan isu perubahan iklim."
 
 const SIMULASI_QUESTION =
   "Simulasikan dampak gelombang laut jika tidak ada hutan mangrove."
@@ -19,64 +13,115 @@ const SIMULASI_QUESTION =
 const SIMULASI_DISCUSSION =
   "Analisis yang benar: Tanpa hutan mangrove, gelombang laut langsung menghantam pantai sehingga menyebabkan abrasi, erosi, dan banjir rob yang lebih parah. Seharusnya siswa menyebutkan fungsi mangrove sebagai peredam gelombang dan pelindung garis pantai."
 
-const configs: Record<ActivityKey, { title: string; question: string; discussion: string }> = {
-  puzzle: {
-    title: "Puzzle Ekosistem — Analisis Data Grafik",
-    question: PUZZLE_QUESTION,
-    discussion: PUZZLE_DISCUSSION,
-  },
-  simulasi: {
-    title: "Simulasi",
-    question: SIMULASI_QUESTION,
-    discussion: SIMULASI_DISCUSSION,
-  },
+const simulasiConfig = {
+  title: "Simulasi",
+  question: SIMULASI_QUESTION,
+  discussion: SIMULASI_DISCUSSION,
 }
 
-function MangroveChart() {
-  const data = [
-    { year: "2015", value: 100 },
-    { year: "2017", value: 80 },
-    { year: "2019", value: 55 },
-    { year: "2021", value: 30 },
-  ]
+const GRID = 3
+const TOTAL = GRID * GRID
+
+function shuffledPieces(): number[] {
+  const base = Array.from({ length: TOTAL }, (_, i) => i)
+  let p = [...base]
+  do {
+    for (let i = p.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[p[i], p[j]] = [p[j], p[i]]
+    }
+  } while (p.every((id, idx) => id === idx))
+  return p
+}
+
+function JigsawPuzzle({ onSolved }: { onSolved: () => void }) {
+  const [pieces, setPieces] = useState<number[]>(shuffledPieces)
+  const [selected, setSelected] = useState<number | null>(null)
+  const [solved, setSolved] = useState(false)
+
+  function handleClick(pos: number) {
+    if (solved) return
+    if (selected === null) {
+      setSelected(pos)
+    } else if (selected === pos) {
+      setSelected(null)
+    } else {
+      const next = [...pieces]
+      ;[next[selected], next[pos]] = [next[pos], next[selected]]
+      setPieces(next)
+      setSelected(null)
+      if (next.every((id, i) => id === i)) {
+        setSolved(true)
+        onSolved()
+      }
+    }
+  }
+
+  function handleReshuffle() {
+    setPieces(shuffledPieces())
+    setSelected(null)
+    setSolved(false)
+  }
 
   return (
-    <div className="rounded-xl border border-border bg-muted/30 p-4">
-      <p className="mb-3 text-center text-xs font-semibold text-muted-foreground">
-        Luas Hutan Mangrove (indeks 2015 = 100)
+    <div className="flex flex-col gap-4">
+      <p className="text-sm leading-relaxed text-muted-foreground">
+        Susun potongan gambar menjadi satu kesatuan. Klik dua potongan untuk bertukar posisi.
       </p>
-      <svg viewBox="0 0 360 200" className="mx-auto w-full max-w-md">
-        {[0, 25, 50, 75, 100].map((v) => {
-          const y = 170 - (v / 100) * 150
-          return (
-            <g key={v}>
-              <line x1="30" y1={y} x2="330" y2={y} stroke="var(--color-border)" strokeWidth="1" />
-              <text x="25" y={y + 4} textAnchor="end" fontSize="10" fill="var(--color-muted-foreground)">
-                {v}
-              </text>
-            </g>
-          )
-        })}
-        {data.map((d, i) => {
-          const barH = (d.value / 100) * 150
-          const x = 40 + i * 75
-          const y = 170 - barH
-          return (
-            <g key={d.year}>
-              <rect x={x} y={y} width="48" height={barH} rx="4" fill="var(--color-primary)" opacity="0.9" />
-              <text x={x + 24} y={y - 6} textAnchor="middle" fontSize="11" fontWeight="600" fill="var(--color-foreground)">
-                {d.value}
-              </text>
-              <text x={x + 24} y="188" textAnchor="middle" fontSize="11" fill="var(--color-muted-foreground)">
-                {d.year}
-              </text>
-            </g>
-          )
-        })}
-      </svg>
-      <p className="mt-2 text-center text-xs text-muted-foreground">
-        Sumber: data mock untuk simulasi analisis
-      </p>
+
+      {solved ? (
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-emerald-400 bg-emerald-50 p-6 text-center">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500 text-white">
+            <Check className="h-6 w-6" />
+          </span>
+          <p className="font-heading text-xl font-bold text-emerald-700">Berhasil!</p>
+          <p className="text-sm text-emerald-700/80">
+            Semua potongan sudah berada di posisi yang benar.
+          </p>
+        </div>
+      ) : (
+        <div className="grid aspect-square w-full max-w-sm grid-cols-3 gap-1.5 self-center">
+          {pieces.map((id, pos) => {
+            const srcRow = Math.floor(id / GRID)
+            const srcCol = id % GRID
+            return (
+              <button
+                key={pos}
+                type="button"
+                onClick={() => handleClick(pos)}
+                className={`relative overflow-hidden rounded-md border-2 transition-all ${
+                  selected === pos
+                    ? "border-primary ring-2 ring-primary"
+                    : "border-border hover:border-primary/50"
+                }`}
+              >
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    backgroundImage: "url(/galeri/ekosistem-1.png)",
+                    backgroundSize: `${GRID * 100}% ${GRID * 100}%`,
+                    backgroundPosition: `${(srcCol / (GRID - 1)) * 100}% ${(srcRow / (GRID - 1)) * 100}%`,
+                  }}
+                />
+                <span className="absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/50 text-[10px] font-semibold text-white">
+                  {id + 1}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {!solved && (
+        <button
+          type="button"
+          onClick={handleReshuffle}
+          className="inline-flex items-center gap-2 self-center rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <Shuffle className="h-4 w-4" />
+          Acak Ulang
+        </button>
+      )}
     </div>
   )
 }
@@ -101,13 +146,13 @@ export default function AktivitasPage() {
   const [showDiscussion, setShowDiscussion] = useState(false)
   const [dndNotice, setDndNotice] = useState(false)
 
-  const [puzzle, setPuzzle] = useState<{ answer: string; done: boolean }>({ answer: "", done: false })
+  const [puzzleDone, setPuzzleDone] = useState(false)
   const [simulasi, setSimulasi] = useState<{ answer: string; done: boolean }>({ answer: "", done: false })
 
   useEffect(() => {
     try {
       const p = localStorage.getItem(`aktivitas_puzzle_${uid}`)
-      if (p) setPuzzle(JSON.parse(p))
+      if (p) setPuzzleDone(JSON.parse(p).done === true)
       const s = localStorage.getItem(`aktivitas_simulasi_${uid}`)
       if (s) setSimulasi(JSON.parse(s))
     } catch {
@@ -115,12 +160,11 @@ export default function AktivitasPage() {
     }
   }, [uid])
 
-  const modalDone = activeModal === "puzzle" ? puzzle.done : simulasi.done
-
   function openModal(kind: ActivityKey) {
-    const data = kind === "puzzle" ? puzzle : simulasi
-    setDraft(data.answer)
-    setShowDiscussion(data.done)
+    if (kind === "simulasi") {
+      setDraft(simulasi.answer)
+      setShowDiscussion(simulasi.done)
+    }
     setActiveModal(kind)
   }
 
@@ -128,12 +172,16 @@ export default function AktivitasPage() {
     setActiveModal(null)
   }
 
+  function handlePuzzleSolved() {
+    localStorage.setItem(`aktivitas_puzzle_${uid}`, JSON.stringify({ done: true }))
+    setPuzzleDone(true)
+  }
+
   function handleSubmit() {
-    if (!activeModal || !draft.trim()) return
+    if (!draft.trim()) return
     const data = { answer: draft.trim(), done: true }
-    localStorage.setItem(`aktivitas_${activeModal}_${uid}`, JSON.stringify(data))
-    if (activeModal === "puzzle") setPuzzle(data)
-    else setSimulasi(data)
+    localStorage.setItem(`aktivitas_simulasi_${uid}`, JSON.stringify(data))
+    setSimulasi(data)
     setShowDiscussion(true)
   }
 
@@ -150,7 +198,7 @@ export default function AktivitasPage() {
     {
       key: "puzzle" as const,
       title: "Puzzle Ekosistem",
-      desc: "Analisis data grafik tentang perubahan luas mangrove!",
+      desc: "Susun potongan gambar ekosistem mangrove!",
       icon: Puzzle,
       accent: "text-amber-600",
       bg: "bg-amber-50",
@@ -179,7 +227,7 @@ export default function AktivitasPage() {
           const Icon = card.icon
           const isPuzzle = card.key === "puzzle"
           const isSimulasi = card.key === "simulasi"
-          const done = isPuzzle ? puzzle.done : isSimulasi ? simulasi.done : false
+          const done = isPuzzle ? puzzleDone : isSimulasi ? simulasi.done : false
           const btnLabel =
             card.key === "dragdrop"
               ? "Mulai"
@@ -259,7 +307,7 @@ export default function AktivitasPage() {
           >
             <div className="sticky top-0 flex items-center justify-between border-b border-border bg-card px-6 py-4">
               <h2 className="font-heading text-lg font-bold text-foreground">
-                {configs[activeModal].title}
+                {activeModal === "puzzle" ? "Puzzle Ekosistem" : simulasiConfig.title}
               </h2>
               <button
                 type="button"
@@ -272,45 +320,70 @@ export default function AktivitasPage() {
             </div>
 
             <div className="flex flex-col gap-4 p-6">
-              {activeModal === "puzzle" ? <MangroveChart /> : <SimulasiImage />}
-
-              <p className="text-sm font-medium leading-relaxed text-foreground">
-                {configs[activeModal].question}
-              </p>
-
-              <textarea
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                disabled={modalDone}
-                rows={5}
-                placeholder="Tulis analisismu di sini..."
-                className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary disabled:opacity-70"
-              />
-
-              {showDiscussion && (
-                <div className="rounded-lg border border-primary/30 bg-accent/40 p-4 text-sm leading-relaxed text-foreground">
-                  <p className="mb-1 font-bold text-primary">Pembahasan</p>
-                  <p>{configs[activeModal].discussion}</p>
-                </div>
-              )}
-
-              {modalDone ? (
-                <button
-                  type="button"
-                  onClick={() => setShowDiscussion((v) => !v)}
-                  className="self-start rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-                >
-                  {showDiscussion ? "Sembunyikan Pembahasan" : "Lihat Pembahasan"}
-                </button>
+              {activeModal === "puzzle" ? (
+                puzzleDone ? (
+                  <div className="flex flex-col gap-4">
+                    <div className="relative aspect-square w-full max-w-sm self-center overflow-hidden rounded-xl border border-border">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/galeri/ekosistem-1.png"
+                        alt="Gambar utuh ekosistem mangrove"
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="flex items-center gap-3 rounded-xl border border-emerald-400 bg-emerald-50 p-4 text-emerald-700">
+                      <CheckCircle2 className="h-5 w-5 shrink-0" />
+                      <p className="text-sm font-medium">
+                        Berhasil! Kamu telah menyelesaikan puzzle ekosistem mangrove.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <JigsawPuzzle onSolved={handlePuzzleSolved} />
+                )
               ) : (
-                <button
-                  type="button"
-                  disabled={!draft.trim()}
-                  onClick={handleSubmit}
-                  className="self-start rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
-                >
-                  Kirim Analisis
-                </button>
+                <>
+                  <SimulasiImage />
+
+                  <p className="text-sm font-medium leading-relaxed text-foreground">
+                    {simulasiConfig.question}
+                  </p>
+
+                  <textarea
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    disabled={simulasi.done}
+                    rows={5}
+                    placeholder="Tulis analisismu di sini..."
+                    className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary disabled:opacity-70"
+                  />
+
+                  {showDiscussion && (
+                    <div className="rounded-lg border border-primary/30 bg-accent/40 p-4 text-sm leading-relaxed text-foreground">
+                      <p className="mb-1 font-bold text-primary">Pembahasan</p>
+                      <p>{simulasiConfig.discussion}</p>
+                    </div>
+                  )}
+
+                  {simulasi.done ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowDiscussion((v) => !v)}
+                      className="self-start rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                    >
+                      {showDiscussion ? "Sembunyikan Pembahasan" : "Lihat Pembahasan"}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={!draft.trim()}
+                      onClick={handleSubmit}
+                      className="self-start rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+                    >
+                      Kirim Analisis
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>

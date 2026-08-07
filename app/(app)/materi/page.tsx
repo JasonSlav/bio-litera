@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, type CSSProperties } from "react"
+import { useState, useRef, type CSSProperties } from "react"
 import Image from "next/image"
-import { Pencil, Images } from "lucide-react"
+import { Pencil, Images, Eye, EyeOff } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
 import { Lightbox } from "@/components/lightbox"
@@ -32,11 +32,27 @@ interface ChapterTable {
   rows: [string, string][]
 }
 
+interface Hotspot {
+  id: number
+  label: string
+  jenis: "Biotik" | "Abiotik"
+  x: number
+  y: number
+  w: number
+  h: number
+}
+
+interface HotspotImageData {
+  src: string
+  hotspots: Hotspot[]
+}
+
 interface Chapter {
   title: string
   subtitle?: string
   desc: string
   images?: string[]
+  hotspotImages?: HotspotImageData[]
   blocks: ChapterBlock[]
   table?: ChapterTable
 }
@@ -81,6 +97,36 @@ const chapters: Chapter[] = [
     subtitle: "Komponen penyusun ekosistem mangrove",
     desc: "Ekosistem adalah sebuah sistem dimana terjadi hubungan timbal balik (saling mempengaruhi dan membutuhkan) antara makhluk hidup dengan lingkungan tak hidup di sekitarnya.",
     images: ["/materi/bab2-foto1.jpg", "/materi/bab2-foto2.jpg"],
+    hotspotImages: [
+      {
+        src: "/materi/bab2-foto1.jpg",
+        hotspots: [
+          { id: 1, label: "Tunas / Anakan Mangrove", jenis: "Biotik", x: 19, y: 42, w: 19, h: 22 },
+          { id: 2, label: "Batang Utama Mangrove", jenis: "Biotik", x: 34, y: 0, w: 22, h: 70 },
+          { id: 3, label: "Akar Napas (Pneumatophores)", jenis: "Biotik", x: 0, y: 0, w: 100, h: 60 },
+          { id: 4, label: "Lumut / Alga Hijau", jenis: "Biotik", x: 50, y: 0, w: 15, h: 20 },
+          { id: 5, label: "Ranting Mati / Serasah Kayu", jenis: "Biotik", x: 0, y: 64, w: 99, h: 15 },
+          { id: 6, label: "Substrat Lumpur / Tanah", jenis: "Abiotik", x: 0, y: 50, w: 100, h: 50 },
+          { id: 7, label: "Pecahan Sedimen / Pasir", jenis: "Abiotik", x: 35, y: 69, w: 25, h: 13 },
+          { id: 8, label: "Sampah Plastik", jenis: "Abiotik", x: 67, y: 37, w: 10, h: 10 },
+        ],
+      },
+      {
+        src: "/materi/bab2-foto2.jpg",
+        hotspots: [
+          { id: 1, label: "Batang Mangrove Utama (Depan)", jenis: "Biotik", x: 0, y: 0, w: 60, h: 66 },
+          { id: 2, label: "Batang Pohon Latar Belakang", jenis: "Biotik", x: 59, y: 0, w: 16, h: 45 },
+          { id: 3, label: "Lumut Hijau", jenis: "Biotik", x: 32, y: 20, w: 26, h: 30 },
+          { id: 4, label: "Akar Pohon Mangrove", jenis: "Biotik", x: 0, y: 58, w: 100, h: 40 },
+          { id: 5, label: "Daun Gugur (Serasah) #1", jenis: "Biotik", x: 78, y: 42, w: 5, h: 8 },
+          { id: 6, label: "Daun Gugur (Serasah) #2", jenis: "Biotik", x: 78, y: 83, w: 9, h: 10 },
+          { id: 7, label: "Genangan Air Basah #1", jenis: "Abiotik", x: 27, y: 78, w: 18, h: 10 },
+          { id: 8, label: "Genangan Air Basah #2", jenis: "Abiotik", x: 70, y: 38, w: 15, h: 8 },
+          { id: 9, label: "Lumpur Halus", jenis: "Abiotik", x: 0, y: 20, w: 100, h: 80 },
+          { id: 10, label: "Sedimen Pasir / Kerikil", jenis: "Abiotik", x: 64, y: 55, w: 10, h: 7 },
+        ],
+      },
+    ],
     blocks: [
       {
         kind: "list",
@@ -502,6 +548,136 @@ function ListRenderer({ list }: { list: ChapterList }) {
   )
 }
 
+function HotspotImage({ data }: { data: HotspotImageData }) {
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const [selected, setSelected] = useState<number | null>(null)
+  const [hover, setHover] = useState<number | null>(null)
+  const [showAll, setShowAll] = useState(false)
+
+  const hit = (clientX: number, clientY: number): number | null => {
+    const el = wrapRef.current
+    if (!el) return null
+    const rect = el.getBoundingClientRect()
+    const px = ((clientX - rect.left) / rect.width) * 100
+    const py = ((clientY - rect.top) / rect.height) * 100
+    let best: number | null = null
+    let bestArea = Infinity
+    for (const h of data.hotspots) {
+      if (px >= h.x && px <= h.x + h.w && py >= h.y && py <= h.y + h.h) {
+        const area = h.w * h.h
+        if (area < bestArea) {
+          bestArea = area
+          best = h.id
+        }
+      }
+    }
+    return best
+  }
+
+  const selectedHotspot = data.hotspots.find((h) => h.id === selected) ?? null
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div
+        ref={wrapRef}
+        className="relative aspect-[3/4] overflow-hidden rounded-xl border border-border"
+        onClick={(e) => {
+          const id = hit(e.clientX, e.clientY)
+          setSelected((cur) => (cur === id ? null : id))
+        }}
+        onMouseMove={(e) => {
+          setHover(hit(e.clientX, e.clientY))
+        }}
+        onMouseLeave={() => setHover(null)}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={data.src} alt="Ekosistem mangrove biotik dan abiotik" className="h-full w-full object-cover" />
+
+        {/* Interaksi */}
+        {data.hotspots.map((h) => {
+          const isSel = selected === h.id
+          const isHover = hover === h.id
+          const visible = showAll || isSel || isHover
+          return (
+            <div
+              key={h.id}
+              className={cn(
+                "absolute rounded-md border-2 transition-all",
+                h.jenis === "Biotik"
+                  ? "border-emerald-400"
+                  : "border-amber-400",
+                visible ? "bg-white/10" : "border-transparent",
+                isSel && "ring-2 ring-offset-1 ring-offset-black/20",
+              )}
+              style={{
+                left: `${h.x}%`,
+                top: `${h.y}%`,
+                width: `${h.w}%`,
+                height: `${h.h}%`,
+                ...(h.jenis === "Biotik"
+                  ? { boxShadow: isSel ? "0 0 0 2px rgba(16,185,129,0.6)" : undefined }
+                  : { boxShadow: isSel ? "0 0 0 2px rgba(245,158,11,0.6)" : undefined }),
+              }}
+            />
+          )
+        })}
+
+        {/* Debug toggle */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            setShowAll((v) => !v)
+          }}
+          className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/50 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+        >
+          {showAll ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+          {showAll ? "Sembunyikan Area" : "Lihat Area"}
+        </button>
+
+        {/* Label terpilih */}
+        {selectedHotspot && (
+          <div className="absolute inset-x-0 bottom-0 flex justify-center px-3 pb-3">
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold shadow",
+                selectedHotspot.jenis === "Biotik"
+                  ? "bg-emerald-500 text-white"
+                  : "bg-amber-500 text-white",
+              )}
+            >
+              {selectedHotspot.label} ({selectedHotspot.jenis})
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Caption list */}
+      <div className="flex flex-wrap gap-1.5">
+        {data.hotspots.map((h) => (
+          <button
+            key={h.id}
+            type="button"
+            onClick={() => setSelected((cur) => (cur === h.id ? null : h.id))}
+            className={cn(
+              "rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors",
+              selected === h.id
+                ? h.jenis === "Biotik"
+                  ? "bg-emerald-500 text-white"
+                  : "bg-amber-500 text-white"
+                : h.jenis === "Biotik"
+                  ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                  : "bg-amber-50 text-amber-700 hover:bg-amber-100",
+            )}
+          >
+            {h.label} ({h.jenis})
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function MateriPage() {
   const { user } = useAuth()
   const [active, setActive] = useState(0)
@@ -638,28 +814,41 @@ export default function MateriPage() {
                 {current.desc}
               </p>
 
-              {current.images && current.images.length > 0 && (
-                <div
-                  className={cn(
-                    "mt-6 grid gap-4",
-                    current.images.length > 1 ? "sm:grid-cols-2" : "grid-cols-1",
-                  )}
-                >
-                  {current.images.map((src) => (
-                    <div
-                      key={src}
-                      className="relative aspect-video overflow-hidden rounded-xl border border-border"
-                    >
-                      <Image
-                        src={src}
-                        alt={`Gambar ${current.title}`}
-                        fill
-                        sizes="(max-width: 1024px) 100vw, 60vw"
-                        className="object-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
+              {current.hotspotImages ? (
+                <>
+                  <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                    Klik pada gambar untuk melihat komponen biotik dan abiotik.
+                  </p>
+                  <div className="mt-3 grid gap-6 sm:grid-cols-2">
+                    {current.hotspotImages.map((hdata) => (
+                      <HotspotImage key={hdata.src} data={hdata} />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                current.images && current.images.length > 0 && (
+                  <div
+                    className={cn(
+                      "mt-6 grid gap-4",
+                      current.images.length > 1 ? "sm:grid-cols-2" : "grid-cols-1",
+                    )}
+                  >
+                    {current.images.map((src) => (
+                      <div
+                        key={src}
+                        className="relative aspect-video overflow-hidden rounded-xl border border-border"
+                      >
+                        <Image
+                          src={src}
+                          alt={`Gambar ${current.title}`}
+                          fill
+                          sizes="(max-width: 1024px) 100vw, 60vw"
+                          className="object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )
               )}
 
               <div className="mt-6 border-t border-border pt-4">

@@ -1,44 +1,461 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type CSSProperties } from "react"
 import Image from "next/image"
-import { Play, Pencil, Images, Leaf } from "lucide-react"
+import { Pencil, Images } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
 import { Lightbox } from "@/components/lightbox"
 
-const chapters = [
+type ListType = "bullet" | "decimal" | "upperLetter" | "lowerLetter"
+
+interface ListItem {
+  label?: string
+  text: string
+  bold?: boolean
+  detail?: string
+}
+
+interface ChapterList {
+  type: ListType
+  items: ListItem[]
+  start?: number
+}
+
+type ChapterBlock =
+  | { kind: "heading"; text: string }
+  | { kind: "paragraph"; text: string }
+  | { kind: "list"; list: ChapterList }
+
+interface ChapterTable {
+  headers: [string, string]
+  rows: [string, string][]
+}
+
+interface Chapter {
+  title: string
+  subtitle?: string
+  desc: string
+  images?: string[]
+  blocks: ChapterBlock[]
+  table?: ChapterTable
+}
+
+const chapters: Chapter[] = [
   {
     title: "Ekosistem Mangrove",
-    desc: "Ekosistem mangrove adalah ekosistem unik yang berada di wilayah pesisir dan muara sungai. Mangrove memiliki peran penting bagi lingkungan dan kehidupan manusia.",
+    subtitle: "Ekosistem Mangrove: Benteng Pesisir yang Terancam",
+    desc: "Pernahkah kamu membayangkan apa yang terjadi jika kota di tepi pantai tidak memiliki tembok pelindung, lalu gelombang ombak besar datang menghantam setiap hari?",
+    images: ["/materi/bab1.jpg"],
+    blocks: [
+      { kind: "paragraph", text: "Lambat laun, tanah tempat kita berdiri akan habis tergerus air laut. Disinilah hutan mangrove bekerja sebagai “benteng bernyawa” yang menjaga daratan Indonesia." },
+      { kind: "paragraph", text: "Salah satu keunggulan yang dimiliki oleh Indonesia adalah menjadi rumah bagi ekosistem mangrove terbesar di dunia. Kita memiliki sekitar 3.36 juta hektar hutan mangrove, atau menyumbang sekitar 20% hingga 25% dari seluruh total mangrove yang ada di bumi. Yang aman artinya, Indonesia merupakan pemegang peranan kunci dalam menjaga kesehatan pesisir dunia." },
+      { kind: "paragraph", text: "Namun sayangnya, dari fakta di atas terdapat fakta lain yang menyedihkan. Dimana dalam 30 tahun terakhir, lebih dari 30% hutan mangrove di Indonesia telah rusak bahkan hilang. Kerusakan ini tidak terjadi begitu saja, melainkan terdapat campur tangan akibat ulah manusia, diantaranya adalah:" },
+      {
+        kind: "list",
+        list: {
+          type: "upperLetter",
+          items: [
+            { text: "Alih fungsi lahan (konversi lahan)", bold: true, detail: "Banyak area hutan mangrove dibabat habis menggunakan alat berat untuk diubah menjadi tambak udang atau ikan secara masif. Selain itu, banyak kawasan pesisir yang ditimbun untuk dijadikan perumahan mewah, kawasan pabrik, hingga pelabuhan kapal." },
+            { text: "Pencemaran sampah plastik & limbah pabrik", bold: true, detail: "Sampah plastik dari daerah kota yang terbawa aliran sungai akhirnya bermuara di pantai dan tersangkut di antara akar-akar mangrove. Plastik ini menutupi akar napas tumbuhan sehingga mangrove tidak dapat memperoleh oksigen yang cukup, sehingga mangrove mengalami kurangnya pasokan oksigen dan mati. Begitupun dengan limbah pabrik yang dibuang sembarangan di sungai yang bermuara di lautan, limbah pabrik yang mengandung bahan kimia yang tidak ramah lingkungan dapat merusak ekosistem dan mengakibatkan tumbuhan mangrove mati" },
+            { text: "Penebangan liar (illegal Logging)", bold: true, detail: "Pohon-pohon mangrove ditebang secara ilegal untuk diambil keuntungan dari bagian batang sebagai bahan pembuatan arang berkualitas tinggi atau bahan bangunan lokal." },
+          ],
+        },
+      },
+      { kind: "paragraph", text: "Dari beberapa penyebab di atas, dampak negatif yang dihasilkan dapat menghasilkan suatu hal serius, seperti:" },
+      {
+        kind: "list",
+        list: {
+          type: "upperLetter",
+          items: [
+            { text: "Abrasi pantai yang masif", bold: true, detail: "Tanpa cengkeraman akar mangrove, ombak laut akan dengan mudah mengikis garis pantai. Banyak daratan di pesisir yang kini sudah hilang dan tenggelam menjadi laut." },
+            { text: "Hilangnya tempat tinggal satwa laut", bold: true, detail: "Hutan mangrove adalah tempat kehidupan bagi bayi ikan, kepiting, dan udang. Bisa dibayangkan, apabila tempat ini hancur, biota laut akan tidak punya tempat berlindung, sehingga populasi mereka akan menurun tajam." },
+            { text: "Bencana banjir Rob", bold: true, detail: "Banjir rob (luapan air laut saat pasang) akan semakin sering muncul dan merendam pemukiman warga pesisir, karena tidak adanya lagi vegetasi yang menahan laju air laut." },
+          ],
+        },
+      },
+    ],
   },
   {
-    title: "Keanekaragaman Hayati",
-    desc: "Mangrove menjadi rumah bagi beragam flora dan fauna, mulai dari ikan, kepiting, burung, hingga berbagai jenis tumbuhan khas pesisir.",
+    title: "Komponen Biotik & Abiotik",
+    subtitle: "Komponen penyusun ekosistem mangrove",
+    desc: "Ekosistem adalah sebuah sistem dimana terjadi hubungan timbal balik (saling mempengaruhi dan membutuhkan) antara makhluk hidup dengan lingkungan tak hidup di sekitarnya.",
+    images: ["/materi/bab2-foto1.jpg", "/materi/bab2-foto2.jpg"],
+    blocks: [
+      {
+        kind: "list",
+        list: {
+          type: "upperLetter",
+          start: 1,
+          items: [{ text: "Komponen Biotik (semua makhluk hidup)", bold: true }],
+        },
+      },
+      { kind: "paragraph", text: "Komponen biotik di dalam hutan mangrove terbagi menjadi tiga tingkatan peran:" },
+      {
+        kind: "list",
+        list: {
+          type: "decimal",
+          start: 1,
+          items: [
+            { text: "Produsen utama (pembuat makanan):", bold: true },
+          ],
+        },
+      },
+      {
+        kind: "list",
+        list: {
+          type: "bullet",
+          items: [
+            { text: "Pohon bakau (Rhizophora): Pohon yang paling sering kita lihat di garis terdepan pantai. Memiliki ciri khas akar tinggi yang menjulur bercabang-cabang." },
+            { text: "Pohon api-api (Avicennia): Pohon yang sangat tahan terhadap air dengan kadar garam tinggi. Memiliki akar napas berbentuk pensil yang keluar dari tanah." },
+            { text: "Pohon bogem (Sonneratia): Pohon yang tumbuh di area lumpur dalam dan memiliki buah berbentuk bulat tebal yang rasanya asam segar." },
+          ],
+        },
+      },
+      {
+        kind: "list",
+        list: {
+          type: "decimal",
+          start: 2,
+          items: [
+            { text: "Konsumen (hewan pemakan):", bold: true },
+          ],
+        },
+      },
+      {
+        kind: "list",
+        list: {
+          type: "bullet",
+          items: [
+            { text: "Konsumen penghuni udara & pohon: monyet ekor panjang (Macaca fascicularis), burung elang laut, burung kowan malam, ular hijau, dan berbagai jenis serangga penyerbuk." },
+            { text: "Konsumen penghuni lumpur & perairan: kepiting bakau (Scylla serrata), ikan glodok, udang rebon, kerang tiram, dan berbagai jenis anak ikan laut." },
+          ],
+        },
+      },
+      {
+        kind: "list",
+        list: {
+          type: "decimal",
+          start: 3,
+          items: [
+            { text: "Pengurai atau dekomposer (pembersih alami):", bold: true },
+          ],
+        },
+      },
+      {
+        kind: "list",
+        list: {
+          type: "bullet",
+          items: [
+            { text: "Bakteri tanah, jamur, serta cacing laut. Mereka bertugas menguraikan daun-daun mangrove yang gugur ke lumpur. Daun gugur ini diubah menjadi serasah (makanan kaya nutrisi dan protein) yang menjadi makanan utama bagi kepiting dan udang kecil." },
+          ],
+        },
+      },
+      {
+        kind: "list",
+        list: {
+          type: "upperLetter",
+          start: 2,
+          items: [{ text: "Komponen Abiotik (lingkungan tak hidup)", bold: true }],
+        },
+      },
+      { kind: "paragraph", text: "Makhluk hidup di atas tidak akan bisa bertahan hidup tanpa didukung oleh komponen abiotik berikut:" },
+      {
+        kind: "list",
+        list: {
+          type: "bullet",
+          items: [
+            { label: "Air payau: ", text: "Air di kawasan mangrove bukan air tawar murni dan bukan air laut murni, melainkan air payau yang merupakan campuran dari kedua jenis air tersebut. Kadar garam salinitas selalu berubah-ubah, tergantung dengan pasang surut air laut dan aliran sungai." },
+            { label: "Tanah lumpur anoksik: ", text: "Tanah di hutan mangrove berupa lumpur halus bertekstur lengket. Lumpur ini kaya akan bahan organik, tetapi anoksik yang artinya sangat miskin oksigen di bagian dalam tanahnya." },
+            { label: "Sinar matahari & suhu: ", text: "Sinar matahari menjadi sumber energi primer untuk proses fotosintesis tumbuhan mangrove. Suhu ideal air di kawasan ini berkisar antara 28°C hingga 32°C." },
+            { label: "Pasang surut air laut:", text: " Gelombang pasang surut yang terjadi dua kali sehari menentukan ketersediaan air, oksigen, dan distribusi nutrisi di seluruh kawasan hutan." },
+          ],
+        },
+      },
+    ],
   },
   {
-    title: "Ciri Khusus Tumbuhan Mangrove",
-    desc: "Tumbuhan mangrove memiliki adaptasi khusus seperti akar napas dan kelenjar garam untuk bertahan di lingkungan berair asin.",
+    title: "Adaptasi Tumbuhan Mangrove",
+    subtitle: "Rahasia kemampuan adaptasi mangrove",
+    desc: "Lingkungan pesisir adalah lingkungan yang sangat ekstrem, dimana komposisi lingkungannya terdiri dari tanahnya yang berlumpur lembek, kadar oksigen di dalam tanah sangat rendah, dan airnya terasa asin.",
+    images: ["/materi/bab3-foto1.jpg", "/materi/bab3-foto2.jpg"],
+    blocks: [
+      { kind: "paragraph", text: "Maka dari faktor tersebut, tumbuhan biasa yang hidup di daratan pasti akan langsung mati jika ditanam di daerah dengan kondisi tanah tersebut. Namun, tumbuhan mangrove berhasil bertahan hidup, karena tumbuhan mangrove memiliki tiga bentuk adaptasi yang tidak dimiliki tumbuhan lain, di antaranya adalah:" },
+      {
+        kind: "list",
+        list: {
+          type: "decimal",
+          start: 1,
+          items: [{ text: "Adaptasi Bentuk Akar (Napas dan cengkeraman)", bold: true }],
+        },
+      },
+      {
+        kind: "list",
+        list: {
+          type: "lowerLetter",
+          items: [
+            { text: "Akar tunjang (Stilt Roots)", bold: true, detail: "Tumbuhan ini memiliki bentuk akar yang mencuat keluar dari batang bagian bawah dan menghujam ke dalam lumpur seperti bentuk ceker ayam atau pondasi cakar ayam bangunan. Dengan bentuk akar yang seperti ini memiliki fungsi untuk menopang pohon agar berdiri kokoh di atas tanah lumpur yang sangat lembek, sekaligus menahan guncangan yang keras. Contohnya terdapat pada tumbuhan mangrove jenis Rhizophora atau juga dikenal dengan sebutan pohon bakau." },
+            { text: "Akar napas (Pneumatofor)", bold: true, detail: "Bentuk akar pada tumbuhan ini adalah tegak lurus mengarah ke atas dan keluar dari lumpur yang menyerupai seperti sebuah pensil atau pasak kayu. Bentuk akar tersebut berfungsi supaya saat di dalam lumpur tidak ada oksigen, akar tersebut akan muncul ke udara untuk menghirup oksigen langsung dari udara bebas saat air laut sedang surut, hal tersebut terjadi melalui pori-pori khusus pada mangrove yang bernama lentisel. Contoh dari ciri tersebut terdapat pada tumbuhan mangrove jenis Avicennia atau sering disebut Api-api dan juga terdapat pada jenis Sonneratia yang biasa disebut pohon bogem." },
+            { text: "Akar lutut (Knee Roots)", bold: true, detail: "Pada ciri akar ini tumbuh di dalam tanah yang melengkung keluar ke atas permukaan tanah dan masuk kembali ke tanah, menyerupai bentuk lutut manusia. Akar dengan bentuk seperti ini berfungsi untuk membantu pertukaran gas oksigen sekaligus memperkuat tumpuan pohon. Akar seperti ini bisa dijumpai pada tanaman mangrove pada jenis Bruguiera atau disebut juga pohon tanjang." },
+          ],
+        },
+      },
+      {
+        kind: "list",
+        list: {
+          type: "decimal",
+          start: 2,
+          items: [{ text: "Adaptasi Mengatur Kadar Garam (Salinitas)", bold: true }],
+        },
+      },
+      {
+        kind: "list",
+        list: {
+          type: "bullet",
+          items: [
+            { label: "Pengeluaran garam (Excretion): ", text: "Pohon seperti Avicennia menyerap air asin dari laut. Kelebihan garam yang ikut terserap kemudian dipompa keluar melalui pori-pori kelenjar garam khusus yang ada di bawah permukaan daun. Jika kamu melihat daun Avicennia, bagian bawahnya sering terdapat butiran kristal garam putih." },
+            { label: "Penyaringan garam (Exclusion):", text: " Pohon seperti Rhizophora memiliki membran sel canggih di bagian akarnya. Membran ini bekerja sebagai saringan osmosis yang sanggup menolak garam hingga 99%, sehingga air yang masuk ke dalam pembuluh pohon sudah menjadi air bersih." },
+          ],
+        },
+      },
+      {
+        kind: "list",
+        list: {
+          type: "decimal",
+          start: 3,
+          items: [{ text: "Adaptasi Perkembangan Unik", bold: true }],
+        },
+      },
+      { kind: "paragraph", text: "Tumbuhan biasa dapat menyebarkan bijinya yang belum tumbuh. Namun, mangrove jenis tertentu seperti Rhizophora menggunakan teknik vivipar (melahirkan). Biji berkecambah dan tumbuh membentuk calon akar panjang yang disebut propagul saat masih menempel di pohon induknya. Ketika propagul sudah cukup berat dan matang, maka dia akan jatuh seperti anak panah yang menancap tegak lurus di dalam lumpur, sehingga bisa langsung tumbuh tanpa hanyut terbawa ombak." },
+    ],
   },
   {
-    title: "Peran Mangrove",
-    desc: "Mangrove berperan melindungi pantai dari abrasi, menyerap karbon, serta menjadi tempat berkembang biak biota laut.",
+    title: "Keanekaragaman Hayati Mangrove",
+    subtitle: "Keanekaragaman hayati",
+    desc: "Hutan mangrove sering diibaratkan sebagai sebuah tempat tinggal alami bertingkat, dimana setiap tingkatan struktur pohon mangrove dimanfaatkan oleh berbagai jenis hewan yang berbeda untuk saling berbagi tempat tinggal.",
+    images: ["/materi/bab4.jpg"],
+    blocks: [
+      {
+        kind: "list",
+        list: {
+          type: "upperLetter",
+          start: 1,
+          items: [{ text: "Dahan dan daun sebagai lantai atas", bold: true }],
+        },
+      },
+      { kind: "paragraph", text: "Bagian teratas hutan yang kaya akan sinar matahari ini menjadi rumah bagi hewan-hewan yang hidup di atas pohon dan hewan yang mempunyai kemampuan untuk terbang, yang terbagi menjadi:" },
+      {
+        kind: "list",
+        list: {
+          type: "bullet",
+          items: [
+            { text: "Mamalia pesisir: Monyet ekor panjang (Macaca fascicularis) yang sering turun untuk mencari kepiting, selain itu terdapat bekantan (Nasalis larvatus) berhidung panjang yang merupakan satwa endemik Kalimantan." },
+            { text: "Burung migran & lokal: Burung cangak, burung kowak malam, dan elang laut dada putih. Beberapa contoh jenis burung yang disebutkan merupakan beberapa contoh burung migran yang menjadikan hutan mangrove sebagai tempat istirahat yang terbang saat melintasi dunia." },
+            { text: "Reptil & serangga: Ular pohon hijau, kadal memanfaatkan hutan mangrove sebagai habitat dan tempat bersembunyi dari musuh. Selain itu, lebah madu memanfaatkan bunga mangrove sebagai sumber nektar." },
+          ],
+        },
+      },
+      {
+        kind: "list",
+        list: {
+          type: "upperLetter",
+          start: 2,
+          items: [{ text: "Batang dan sistem akar sebagai lantai tengah", bold: true }],
+        },
+      },
+      { kind: "paragraph", text: "Zona yang selalu berganti kondisi dari basah ke kering akibat pasang surut air laut ini menjadi tempat menempelnya berbagai biota unik:" },
+      {
+        kind: "list",
+        list: {
+          type: "bullet",
+          items: [
+            { text: "Kerang-kerangan (Mollusca): kerang tiram (Crassostrea) dan teritip yang menempel sangat kuat di kulit batang dan akar tunjang agar tidak hanyut terbawa arus." },
+            { text: "Kepiting paman (Fiddler Crab): kepiting jantan spesies Uca yang memiliki satu capit berukuran sangat besar berwarna jingga atau merah menyala. Mereka membuat lubang tempat tinggal di sekitar perakaran mangrove." },
+          ],
+        },
+      },
+      {
+        kind: "list",
+        list: {
+          type: "upperLetter",
+          start: 3,
+          items: [{ text: "Perairan dan dasar lumpur sebagai lantai bawah", bold: true }],
+        },
+      },
+      { kind: "paragraph", text: "Kawasan paling dasar yang selalu terendam air payau atau berupa lumpur basah, dengan macam satwanya yaitu:" },
+      {
+        kind: "list",
+        list: {
+          type: "bullet",
+          items: [
+            { label: "Ikan glodok (Mudskipper): ", text: "ikan sangat unik yang sanggup bertahan hidup di luar air dalam waktu lama. Mereka memiliki kantong udara khusus dan menggunakan sirip dadanya yang kuat untuk berjalan, memanjat akar, dan melompat di atas lumpur." },
+            { label: "Kepiting bakau (Scylla serrata): ", text: "kepiting bernilai ekonomi tinggi yang menggali lubang dalam di dasar lumpur sebagai tempat bersembunyi dari serangan predator." },
+            { label: "Daerah asuhan biota laut (Nursery ground): ", text: "tempat berlindung aman bagi benih udang vaname, anak ikan kakap putih, dan anak ikan bandeng sebelum mereka cukup besar untuk berenang ke laut lepas." },
+          ],
+        },
+      },
+    ],
   },
   {
-    title: "Ancaman Terhadap Mangrove",
-    desc: "Alih fungsi lahan menjadi tambak, pencemaran, dan penebangan liar menjadi ancaman serius bagi kelestarian mangrove.",
+    title: "Manfaat Ekologi & Ekonomi",
+    subtitle: "Manfaat luar biasa mangrove bagi alam dan manusia",
+    desc: "Keberadaan hutan mangrove memberikan dampak positif yang luar biasa besar, baik dari sudut pandang menjaga kelestarian alam (ekologi) maupun dari sudut pandang pendapatan warga (ekonomi).",
+    blocks: [
+      {
+        kind: "list",
+        list: {
+          type: "upperLetter",
+          start: 1,
+          items: [{ text: "Manfaat ekologi (Untuk keseimbangan alam)", bold: true }],
+        },
+      },
+      {
+        kind: "list",
+        list: {
+          type: "decimal",
+          start: 1,
+          items: [
+            { label: "Penahan abrasi dan perlindungan tsunami: ", text: "rimbunnya jaring-jaring akar mangrove berfungsi sebagai struktur pemecah gelombang alami. Energi ombak laut yang besar akan diredam hingga 66% saat melewati hutan mangrove sepanjang 100m, sehingga garis pantai tidak tergerus abrasi dan daratan terlindung dari gelombang tsunami." },
+            { label: "Penyaring air dan pencemaran (Biofilter): ", text: "air sungai yang mengalir menuju laut sering membawa endapan lumpur halus dan racun logam berat dan limbah industri. Akar mangrove menangkap endapan lumpur tersebut dan menyerap racunnya, sehingga air yang masuk ke perairan laut lepas tetap jernih dan tidak merusak ekosistem terumbu karang." },
+            { label: "Sebagai habitat & nursery ground: ", text: "mangrove menjadi penolong alami, dimana akar-akarnya yang rapat menyediakan celah-celah sempit yang aman bagi ikan dan udang kecil dari buruan ikan-ikan atau biota laut pemangsa yang berukuran besar." },
+          ],
+        },
+      },
+      {
+        kind: "list",
+        list: {
+          type: "upperLetter",
+          start: 2,
+          items: [{ text: "Manfaat ekonomi (untuk Kesejahteraan manusia)", bold: true }],
+        },
+      },
+      {
+        kind: "list",
+        list: {
+          type: "decimal",
+          start: 1,
+          items: [
+            { label: "Sumber hasil tangkapan nelayan: ", text: "lebih dari 70% spesies ikan laut dan udang komersial yang dijual di pasar tradisional menghabiskan masa kecilnya di hutan mangrove. Tanpa adanya mangrove, stok tangkapan ikan nelayan tradisional akan berkurang secara drastis." },
+            { label: "Pengembangan ekowisata berkelanjutan: ", text: "hutan mangrove yang dikelola dengan baik dapat diubah menjadi destinasi wisata alam yang indah. Dengan melengkapi catatan edukasi serta panduan mengenai penanaman dan pelestarian tumbuhan mangrove, maka hutan mangrove ini akan menjadi sumber penghasilan ekonomi dengan menjadi tempat wisata edukasi pelestarian mangrove." },
+          ],
+        },
+      },
+      {
+        kind: "list",
+        list: {
+          type: "decimal",
+          start: 3,
+          items: [{ text: "Produk olahan hasil hutan non-kayu:", bold: true }],
+        },
+      },
+      {
+        kind: "list",
+        list: {
+          type: "bullet",
+          items: [
+            { text: "Kuliner: buah dari pohon bogem (Sonneratia) dapat diolah menjadi sirup mangrove kaya vitamin C, dodol, selai, serta selonsong keripik." },
+            { text: "Kerajinan batik: getah dari kulit pohon mangrove tertentu seperti pada jenis Rhizophora, Ceriops tagal, dan Xylocarpus dapat dimanfaatkan sebagai bahan pewarna alami kain batik yang ramah lingkungan dan bernilai jual tinggi." },
+          ],
+        },
+      },
+    ],
   },
   {
-    title: "Upaya Konservasi",
-    desc: "Penanaman kembali, perlindungan kawasan, serta edukasi masyarakat menjadi kunci pelestarian ekosistem mangrove.",
+    title: "Ancaman Kerusakan Mangrove",
+    subtitle: "Dampak kerusakan mangrove bagi ekologi & ekonomi",
+    desc: "Jika kerusakan hutan mangrove terus dibiarkan tanpa adanya tindakan perbaikan, akan timbul rantai dampak negatif yang menghancurkan sektor lingkungan, sekaligus sektor perekonomian masyarakat pesisir.",
+    images: ["/materi/bab6.jpg"],
+    blocks: [
+      { kind: "paragraph", text: "Kerusakan tersebut akan memberikan dampak yang cukup spesifik, seperti yang dijelaskan pada tabel perbandingan berikut:" },
+    ],
+    table: {
+      headers: [
+        "Dampak kerusakan sektor ekologi (alam)",
+        "Dampak kerusakan sektor ekonomi (manusia)",
+      ],
+      rows: [
+        [
+          "Garis pantai tergerus masif (abrasi): hilangnya mangrove menyebabkan daratan tergerus ombak hingga puluhan meter setiap tahunnya, dan hal ini menyebabkan kerusakan struktur geologi daerah pesisir.",
+          "Hilangnya mata pencaharian nelayan: hal ini disebabkan karena populasi ikan dan udang mengalami penurunan drastis, karena habitat alaminya hancur. Nelayan juga harus melaut lebih jauh dan mengeluarkan biaya bahan bakar perahu yang cukup mahal.",
+        ],
+        [
+          "Kerusakan terumbu karang & padang lamun: dampak selanjutnya terjadi ketika lumpur dari sungai meluncur tanpa hambatan ke laut lepas dan menutupi permukaan terumbu karang, dimana hal tersebut dapat menyebabkan karang-karang yang ada mati lemas.",
+          "Kerugian harta benda akibat banjir Rob: banjir air laut yang rutin merendam rumah, jalan raya, dan fasilitas umum menyebabkan kerusakan fisik bangunan yang memakan biaya perbaikan yang sangat tinggi. Banjir Rob sendiri terjadi karena luapan air laut saat pasang akibat perubahan fisik lingkungan pesisir.",
+        ],
+        [
+          "Ancaman kepunahan satwa pesisir: dampak lainnya berujung pada hilangnya habitat bagi burung-burung migran, monyet ekor panjang, dan mamalia pesisir, yang mana semua satwa yang disebutkan merupakan satwa yang menghuni dan memanfaatkan hutan mangrove sebagai habitat. Jika habitat alami mereka rusak dan hilang, maka populasi spesies mereka akan menurun secara drastis.",
+          "Pengeluaran anggaran negara yang besar: jika benteng alami seperti hutan mangrove hilang, pemerintah harus mengeluarkan dana yang cukup besar untuk membuat benteng buatan berupa tanggul laut beton yang bisa rusak kapan saja.",
+        ],
+      ],
+    },
   },
   {
-    title: "Mangrove & Perubahan Iklim",
-    desc: "Mangrove menyerap karbon hingga empat kali lebih banyak dibanding hutan daratan, membantu mitigasi perubahan iklim.",
+    title: "Konservasi Mangrove",
+    subtitle: "Upaya penyelamatan dan konservasi mangrove",
+    desc: "Konservasi adalah seluruh bentuk upaya perlindungan, pelestarian, dan pemanfaatan ekosistem secara bijaksana agar manfaatnya dapat terus dinikmati hingga generasi mendatang.",
+    images: ["/materi/bab7-foto1.jpg", "/materi/bab7-foto2.jpg"],
+    blocks: [
+      { kind: "paragraph", text: "Selain itu, konservasi merupakan upaya dan pengelolaan sumber daya alam serta lingkungan secara baik agar keberadaannya tetap terjaga dan dapat dimanfaatkan secara berkelanjutan untuk masa kini hingga masa depan nanti. Untuk dapat mewujudkan hal tersebut, berikut adalah langkah-langkah nyata guna melestarikan mangrove pada konservasi:" },
+      {
+        kind: "list",
+        list: {
+          type: "decimal",
+          start: 1,
+          items: [{ text: "Rehabilitasi dan Reboisasi Pesisir", bold: true, detail: "Rehabilitasi adalah kegiatan menanam kembali bibit-bibit mangrove di kawasan hutan yang telah gundul atau di area bekas tambak yang sudah ditinggalkan. Prinsip penanaman dilakukan berdasarkan wilayah zonasi, dengan penanaman tidak boleh sembarangan, jenis Rhizophora harus ditanam di area yang terkena pasang surut langsung, lalu Avicennia di area yang berlumpur halus dan berpasir, serta jenis Bruguiera di area yang lebih dekat ke daratan air tawar." }],
+        },
+      },
+      {
+        kind: "list",
+        list: {
+          type: "decimal",
+          start: 2,
+          items: [{ text: "Penetapan Kawasan Hutan Lindung & Penegakan Hukum", bold: true, detail: "Dalam sebuah pelestarian berbasis konservasi, pemerintah menetapkan kawasan mangrove strategis sebagai suaka margasatwa atau tanaman nasional. Langkah ini disertai dengan aturan hukum yang tegas berupa sanksi pidana dan denda bagi siapa saja yang melakukan penebangan liar dan pembukaan lahan ilegal di kawasan hutan mangrove." }],
+        },
+      },
+      {
+        kind: "list",
+        list: {
+          type: "decimal",
+          start: 3,
+          items: [{ text: "Ekowisata Berbasis Masyarakat", bold: true, detail: "Untuk mengembangkan sebuah konservasi, mengubah pola pikir masyarakat pesisir dari menebang pohon menjadi menjaga hutan amat sangat diperlukan. Dengan mengelola kawasan mangrove sebagai tempat wisata edukasi, masyarakat mendapatkan keuntungan ekonomi dari adanya kunjungan wisatawan, serta mereka juga mendapatkan kepercayaan wisatawan untuk dapat melestarikan dan menjaga kelestarian hutan tersebut." }],
+        },
+      },
+      {
+        kind: "list",
+        list: {
+          type: "decimal",
+          start: 4,
+          items: [{ text: "Aksi Bersih Pantai", bold: true, detail: "Selain menekan pada hutan mangrove, melakukan gerakan bersih-bersih sampah di daerah hutan sampai pantai juga menjadi bentuk penjagaan dan pelestarian ekosistem hutan mangrove tersebut. Pembersihan ini dapat membebaskan pertumbuhan mangrove dalam proses pernapasannya dari sampah yang ada." }],
+        },
+      },
+    ],
+  },
+  {
+    title: "Mangrove dan Perubahan Iklim",
+    subtitle: "Peran mangrove dalam melawan perubahan iklim",
+    desc: "Saat ini, bumi kita sedang mengalami pemanasan global atau biasanya juga disebut Global Warming dan perubahan iklim yang memicu cuaca ekstrem, badai, dan peningkatan suhu udara.",
+    images: ["/materi/bab8.jpg"],
+    blocks: [
+      { kind: "paragraph", text: "Penyebab utamanya adalah menumpuknya gas rumah kaca, terutama pada karbon dioksida (CO2), di atmosfer akibat asap kendaraan, pencemaran udara dari pabrik, dan pembakaran hutan. Dari permasalahan tersebut, mangrove merupakan salah satu penyelamat yang cukup besar dampaknya." },
+      { kind: "heading", text: "Apa itu karbon biru (Blue Carbon)?" },
+      { kind: "paragraph", text: "Tumbuhan di bumi menyerap gas CO2 dari udara dan mengubahnya menjadi oksigen dan batang kayu melalui proses fotosintesis. Karbon yang diserap dan disimpan oleh ekosistem perairan dan pesisir, seperti hutan mangrove, padang lamun, dan rawa asin yang biasa dikenal dengan istilah Blue Carbon (karbon biru)." },
+      { kind: "heading", text: "Kenapa mangrove dikatakan memiliki dampak besar?" },
+      { kind: "paragraph", text: "Untuk menjawab pertanyaan tersebut, kalian bisa menyimak penjelasan berikut:" },
+      {
+        kind: "list",
+        list: {
+          type: "upperLetter",
+          items: [
+            { text: "Daya serap karbon yang sangat tinggi:", detail: "Hutan mangrove mampu menyerap dan menyimpan karbon dengan kapasitas 3 sampai 5 kali lebih banyak dibandingkan hutan hujan tropis biasa yang ada di daratan." },
+            { text: "Kemampuan menyimpan karbon dalam jangka sangat panjang:", detail: "Pada hutan daratan biasa, karbon hanya bisa tersimpan di dalam batang dan kayu. Namun pada hutan mangrove, sebagian besar karbon yang diserap dipindahkan dan diendapkan jauh ke dalam tanah lumpur yang basa dan terendam air. Karena lumpur tersebut minim oksigen (anoksik), proses pembusukan berjalan sangat lambat, sehingga karbon tersebut terkunci secara aman di bawah tanah hingga ratusan bahkan ribuan tahun ke depan." },
+          ],
+        },
+      },
+    ],
   },
 ]
 
-const GALLERY_INDEX = 7
+const GALLERY_INDEX = 8
 
 type Category = "Flora" | "Fauna" | "Abiotik"
 type Jenis = "Biotik" | "Abiotik"
@@ -55,6 +472,35 @@ const galleryImages: { src: string; title: string; category: Category; jenis: Je
   { src: "/galeri/kegiatan-1.png", title: "Batu Karang", category: "Abiotik", jenis: "Abiotik" },
   { src: "/placeholder.svg", title: "Sinar Matahari", category: "Abiotik", jenis: "Abiotik" },
 ]
+
+const listStyle: Record<ListType, CSSProperties> = {
+  bullet: { listStyleType: "disc" },
+  decimal: { listStyleType: "decimal" },
+  upperLetter: { listStyleType: "upper-alpha" },
+  lowerLetter: { listStyleType: "lower-alpha" },
+}
+
+function ListRenderer({ list }: { list: ChapterList }) {
+  const isOrdered = list.type !== "bullet"
+  const Tag = isOrdered ? "ol" : "ul"
+  return (
+    <Tag
+      style={listStyle[list.type]}
+      {...(isOrdered && list.start ? { start: list.start } : {})}
+      className="mt-2 flex flex-col gap-1.5 pl-6"
+    >
+      {list.items.map((item, i) => (
+        <li key={i} className="text-sm leading-relaxed text-muted-foreground">
+          {item.label && <span className="font-semibold text-foreground">{item.label}</span>}
+          <span className={item.bold ? "font-semibold text-foreground" : undefined}>{item.text}</span>
+          {item.detail && (
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.detail}</p>
+          )}
+        </li>
+      ))}
+    </Tag>
+  )
+}
 
 export default function MateriPage() {
   const { user } = useAuth()
@@ -73,7 +519,7 @@ export default function MateriPage() {
   return (
     <>
       <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-        <aside className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <aside className="rounded-xl border border-border bg-card p-4 shadow-sm lg:sticky lg:top-20 lg:self-start">
           <h2 className="mb-3 font-heading text-sm font-bold text-foreground">
             Materi &amp; Galeri
           </h2>
@@ -179,35 +625,101 @@ export default function MateriPage() {
             </>
           ) : (
             <>
-              <h1 className="mb-4 font-heading text-xl font-bold text-foreground">
+              <h1 className="mb-1 font-heading text-xl font-bold text-foreground">
                 {active + 1}. {current.title}
               </h1>
+              {current.subtitle && (
+                <p className="mb-3 text-sm font-medium text-primary">
+                  {current.subtitle}
+                </p>
+              )}
 
-              <div className="relative aspect-video w-full overflow-hidden rounded-xl">
-                <Image
-                  src="/galeri/ekosistem-1.png"
-                  alt={`Video pembelajaran ${current.title}`}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 60vw"
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-foreground/30">
-                  <button
-                    type="button"
-                    className="flex h-16 w-16 items-center justify-center rounded-full bg-card/90 text-primary shadow-lg transition-transform hover:scale-105"
-                    aria-label="Putar video"
-                  >
-                    <Play className="h-7 w-7 fill-primary" />
-                  </button>
-                </div>
-                <span className="absolute left-2 bottom-2 rounded-full bg-foreground/70 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
-                  Media: Ekosistem (Abiotik)
-                </span>
-              </div>
-
-              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+              <p className="text-sm leading-relaxed text-muted-foreground">
                 {current.desc}
               </p>
+
+              {current.images && current.images.length > 0 && (
+                <div
+                  className={cn(
+                    "mt-6 grid gap-4",
+                    current.images.length > 1 ? "sm:grid-cols-2" : "grid-cols-1",
+                  )}
+                >
+                  {current.images.map((src) => (
+                    <div
+                      key={src}
+                      className="relative aspect-video overflow-hidden rounded-xl border border-border"
+                    >
+                      <Image
+                        src={src}
+                        alt={`Gambar ${current.title}`}
+                        fill
+                        sizes="(max-width: 1024px) 100vw, 60vw"
+                        className="object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-6 border-t border-border pt-4">
+                {current.blocks.map((block, bi) => {
+                  if (block.kind === "heading") {
+                    return (
+                      <h3
+                        key={bi}
+                        className="mt-5 mb-1 font-heading text-base font-bold text-foreground"
+                      >
+                        {block.text}
+                      </h3>
+                    )
+                  }
+                  if (block.kind === "paragraph") {
+                    return (
+                      <p
+                        key={bi}
+                        className="mt-2 text-sm leading-relaxed text-muted-foreground"
+                      >
+                        {block.text}
+                      </p>
+                    )
+                  }
+                  return <ListRenderer key={bi} list={block.list} />
+                })}
+
+                {current.table && (
+                  <div className="mt-4 overflow-x-auto">
+                    <table className="w-full border-collapse text-sm">
+                      <thead>
+                        <tr>
+                          {current.table.headers.map((h, hi) => (
+                            <th
+                              key={hi}
+                              className="border border-border bg-muted/40 px-4 py-3 text-left font-heading text-sm font-bold text-foreground"
+                            >
+                              {h}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {current.table.rows.map((row, ri) => (
+                          <tr key={ri}>
+                            {row.map((cell, ci) => (
+                              <td
+                                key={ci}
+                                className="border border-border px-4 py-3 align-top text-sm leading-relaxed text-muted-foreground"
+                              >
+                                {cell}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </section>
